@@ -387,6 +387,7 @@ export default function MissionSmith() {
   const [paintingPlayer, setPaintingPlayer] = useState('player1');
   const [isPainting, setIsPainting] = useState(false);
   const [showMissionPanel, setShowMissionPanel] = useState(false);
+  const [mobileTab, setMobileTab] = useState('board'); // 'board', 'setup', 'options'
   const boardRef = useRef(null);
 
   const system = GAME_SYSTEMS[gameSystem];
@@ -851,6 +852,54 @@ export default function MissionSmith() {
         input[type="text"]:focus {
           border-color: ${system.primaryColor};
         }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 1024px) {
+          .desktop-only { display: none !important; }
+          .mobile-only { display: flex !important; }
+          
+          .main-content {
+            flex-direction: column !important;
+            padding: 12px !important;
+            gap: 12px !important;
+          }
+          
+          .sidebar-left, .sidebar-right {
+            width: 100% !important;
+            display: none !important;
+          }
+          
+          .sidebar-left.show, .sidebar-right.show {
+            display: flex !important;
+          }
+          
+          .board-container {
+            display: none !important;
+          }
+          
+          .board-container.show {
+            display: flex !important;
+          }
+        }
+        
+        @media (min-width: 1025px) {
+          .mobile-only { display: none !important; }
+          .sidebar-left, .sidebar-right, .board-container {
+            display: flex !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .header-title { font-size: 16px !important; }
+          .header-subtitle { display: none !important; }
+          .header-buttons .btn-text { display: none; }
+          .header-buttons .btn { padding: 8px !important; min-width: 40px; }
+        }
+        
+        @media (max-width: 480px) {
+          .panel { padding: 12px !important; }
+          .panel-title { font-size: 10px !important; }
+        }
       `}</style>
 
       {/* Header */}
@@ -858,22 +907,24 @@ export default function MissionSmith() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '12px 24px',
+        padding: '12px 16px',
         borderBottom: '1px solid #27272a',
         background: 'rgba(9,9,11,0.8)',
         backdropFilter: 'blur(8px)',
+        flexWrap: 'wrap',
+        gap: '12px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <h1 style={{
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h1 className="header-title" style={{
             fontFamily: "'Orbitron', monospace",
-            fontSize: '22px',
+            fontSize: '20px',
             fontWeight: '700',
             color: system.primaryColor,
-            letterSpacing: '3px',
+            letterSpacing: '2px',
           }}>
             MISSIONSMITH
           </h1>
-          <span style={{ 
+          <span className="header-subtitle" style={{ 
             fontSize: '11px', 
             color: '#71717a', 
             fontWeight: '500',
@@ -883,21 +934,21 @@ export default function MissionSmith() {
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <select 
             value={gameSystem} 
             onChange={(e) => { setGameSystem(e.target.value); clearBoard(); }}
-            style={{ minWidth: '160px' }}
+            style={{ minWidth: '120px', fontSize: '13px', padding: '6px 8px' }}
           >
             {Object.entries(GAME_SYSTEMS).map(([key, sys]) => (
-              <option key={key} value={key}>{sys.name}</option>
+              <option key={key} value={key}>{sys.shortName}</option>
             ))}
           </select>
           
           <select 
             value={tableSize} 
             onChange={(e) => handleTableSizeChange(e.target.value)}
-            style={{ minWidth: '100px' }}
+            style={{ minWidth: '80px', fontSize: '13px', padding: '6px 8px' }}
           >
             {TABLE_SIZES.map(size => (
               <option key={size.id} value={size.id}>{size.label}</option>
@@ -905,18 +956,18 @@ export default function MissionSmith() {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="header-buttons" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           <button className="btn btn-primary" onClick={randomizeMission} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <IconComponent name="Zap" size={16} />
-            Generate
+            <span className="btn-text">Generate</span>
           </button>
           <button className="btn" onClick={exportMission} disabled={isExporting} style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: isExporting ? 0.6 : 1 }}>
             <IconComponent name="Flag" size={16} />
-            {isExporting ? 'Exporting...' : 'Export'}
+            <span className="btn-text">{isExporting ? '...' : 'Export'}</span>
           </button>
           <button className="btn" onClick={() => fileInputRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <IconComponent name="Relic" size={16} />
-            Import
+            <span className="btn-text">Import</span>
           </button>
           <input
             ref={fileInputRef}
@@ -927,16 +978,57 @@ export default function MissionSmith() {
           />
           <button className="btn" onClick={clearBoard} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <IconComponent name="Skull" size={16} />
-            Clear
+            <span className="btn-text">Clear</span>
           </button>
         </div>
       </header>
 
+      {/* Mobile Tab Navigation */}
+      <div className="mobile-only" style={{
+        display: 'none',
+        padding: '8px 16px',
+        gap: '8px',
+        background: '#18181b',
+        borderBottom: '1px solid #27272a',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+      }}>
+        {[
+          { id: 'board', label: 'Board' },
+          { id: 'setup', label: 'Setup' },
+          { id: 'options', label: 'Options' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            className={`btn ${mobileTab === tab.id ? 'active' : ''}`}
+            onClick={() => setMobileTab(tab.id)}
+            style={{ flex: 1, padding: '10px' }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {/* Main Content */}
-      <div style={{ display: 'flex', padding: '20px', gap: '20px', minHeight: 'calc(100vh - 65px)' }}>
+      <div className="main-content" style={{ 
+        display: 'flex', 
+        padding: '20px', 
+        gap: '20px', 
+        minHeight: 'calc(100vh - 65px)',
+      }}>
         
-        {/* Left Sidebar */}
-        <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '16px', flexShrink: 0 }}>
+        {/* Left Sidebar - Desktop / Setup Tab - Mobile */}
+        <div 
+          className={`sidebar-left ${mobileTab === 'setup' ? 'show' : ''}`}
+          style={{ 
+            width: '300px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '16px', 
+            flexShrink: 0,
+          }}
+        >
           
           {/* Mission Name */}
           <div className="panel">
@@ -1030,8 +1122,16 @@ export default function MissionSmith() {
         </div>
 
         {/* Main Board */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div className="panel" style={{ padding: '24px' }}>
+        <div 
+          className={`board-container ${mobileTab === 'board' ? 'show' : ''}`}
+          style={{ 
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center',
+          }}
+        >
+          <div className="panel" style={{ padding: '24px', maxWidth: '100%', overflow: 'auto' }}>
             <div style={{ marginBottom: '12px', textAlign: 'center' }}>
               <span style={{ fontSize: '12px', color: '#71717a', fontFamily: "'Orbitron', monospace" }}>
                 {TABLE_SIZES.find(t => t.id === tableSize)?.label} — 6" cells
@@ -1042,6 +1142,7 @@ export default function MissionSmith() {
               style={{
                 width: boardWidth,
                 height: boardHeight,
+                minWidth: boardWidth,
                 position: 'relative',
                 background: `
                   linear-gradient(rgba(24,24,27,0.85), rgba(24,24,27,0.85)),
@@ -1052,12 +1153,16 @@ export default function MissionSmith() {
                 borderRadius: '4px',
                 userSelect: 'none',
                 cursor: selectedTool ? 'crosshair' : 'default',
+                touchAction: 'none',
               }}
               onClick={handleBoardClick}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onTouchStart={(e) => { e.preventDefault(); handleMouseDown(e.touches[0]); }}
+              onTouchMove={(e) => { e.preventDefault(); handleMouseMove(e.touches[0]); }}
+              onTouchEnd={handleMouseUp}
             >
               {/* Deployment Zones */}
               {boardElements.deploymentZones.map((zone, i) => (
@@ -1158,7 +1263,7 @@ export default function MissionSmith() {
                     top: -18,
                     transform: 'translateX(-50%)',
                     fontSize: '10px',
-                    color: '#52525b',
+                    color: '#71717a',
                     fontFamily: "'Orbitron', monospace",
                     fontWeight: '600',
                   }}
@@ -1175,7 +1280,7 @@ export default function MissionSmith() {
                     top: i * cellSize + cellSize / 2,
                     transform: 'translateY(-50%)',
                     fontSize: '10px',
-                    color: '#52525b',
+                    color: '#71717a',
                     fontFamily: "'Orbitron', monospace",
                     fontWeight: '600',
                   }}
@@ -1206,8 +1311,17 @@ export default function MissionSmith() {
           </div>
         </div>
 
-        {/* Right Sidebar */}
-        <div style={{ width: '300px', display: 'flex', flexDirection: 'column', gap: '16px', flexShrink: 0 }}>
+        {/* Right Sidebar - Desktop / Options Tab - Mobile */}
+        <div 
+          className={`sidebar-right ${mobileTab === 'options' ? 'show' : ''}`}
+          style={{ 
+            width: '300px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '16px', 
+            flexShrink: 0,
+          }}
+        >
           
           {/* Objectives Palette */}
           <div className="panel">
@@ -1290,8 +1404,8 @@ export default function MissionSmith() {
             </div>
           </div>
 
-          {/* Quick Start */}
-          <div className="panel" style={{ fontSize: '12px', color: '#71717a' }}>
+          {/* Quick Start - Desktop only */}
+          <div className="panel desktop-only" style={{ fontSize: '12px', color: '#71717a' }}>
             <div className="panel-title">Quick Start</div>
             <ol style={{ paddingLeft: '18px', lineHeight: '1.8' }}>
               <li>Select table size & game system</li>
